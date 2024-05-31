@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Dashboard</h1>
+        <button id="logoutButton" class="btn btn-danger">Logout</button>
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Nombre de bornes</h5>
+                        <p class="card-text" id="numAPs">Loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Nombre de clients</h5>
+                        <p class="card-text" id="numClients">Loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Volume total échangé (Entrée/Sortie)</h5>
+                        <p class="card-text" id="totalVolume">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                localStorage.removeItem('access_token');
+                window.location.href = '/login';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            fetch('/dashboard_info', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('numAPs').textContent = data.num_aps;
+                document.getElementById('numClients').textContent = data.num_clients;
+                document.getElementById('totalVolume').textContent = `Upstream: ${data.total_upstream_transferred} bytes, Downstream: ${data.total_downstream_transferred} bytes`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (error.message.includes("Besoin du token")) {
+                    window.location.href = '/login';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
